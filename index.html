@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gerar QR Code em Lote e Salvar em ZIP</title>
+    <!-- Inclua a biblioteca qrcode.js e JSZip -->
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        /* Estilo para o body */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+        }
+        
+        /* Estilo para o cabeçalho */
+        h1 {
+            text-align: center;
+            padding: 20px;
+            background-color: #1a73e8;
+            color: white;
+            margin: 0;
+        }
+        
+        /* Estilo para o conteúdo */
+        .content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        
+        /* Estilo para a caixa de entrada */
+        #conteudos {
+            width: 100%; /* Largura */
+            height: 150px; /* Altura */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+        
+        /* Estilo para os botões */
+        .button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .button:hover {
+            background-color: #1559b5;
+        }
+        
+        /* Estilo para os QR Codes */
+        #qrcodes {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        #qrcodes img {
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>Gerar QR Codes</h1>
+    <div class="content">
+        <!-- Label fora da caixa de entrada -->
+        <label for="conteudos">Conteúdos dos QR Codes (separe por vírgula):</label>
+        <br>
+        <textarea id="conteudos" placeholder="Digite os conteúdos"></textarea>
+        <button class="button" onclick="gerarQRCodes()">Gerar QR Codes</button>
+    </div>
+    
+    <div class="content">
+        <div id="qrcodes"></div>
+        <button class="button" onclick="baixarZIP()">Baixar QR Codes ZIP</button>
+    </div>
+
+    <!-- Script para gerar os QR Codes e salvar em ZIP -->
+    <script>
+        function limparNomeArquivo(nome_arquivo) {
+            // Pega os últimos 8 caracteres (dígitos) do nome do arquivo
+            return nome_arquivo.slice(-8);
+        }
+
+        function gerarQRCodes() {
+            var conteudos = document.getElementById("conteudos").value.split(",");
+            var qrcodesDiv = document.getElementById("qrcodes");
+
+            // Limpar conteúdo anterior
+            qrcodesDiv.innerHTML = "";
+
+            // Tamanho para os QR codes
+            var qrWidth = 160;
+            var qrHeight = 160;
+
+            // Cria os QR Codes usando a biblioteca qrcode.js com o tamanho definido
+            var zip = new JSZip();
+
+            for (var i = 0; i < conteudos.length; i++) {
+                var qrcodeDiv = document.createElement("div");
+                var conteudo = conteudos[i].trim();
+                if (conteudo !== "") {
+                    var nomeArquivo = limparNomeArquivo(conteudo);
+                    var qrcodeId = "qrcode_" + (i + 1);
+                    qrcodeDiv.id = qrcodeId;
+                    qrcodesDiv.appendChild(qrcodeDiv);
+
+                    var qrcode = new QRCode(qrcodeId, {
+                        text: conteudo,
+                        width: qrWidth,
+                        height: qrHeight,
+                    });
+
+                    var imageData = document.getElementById(qrcodeId).firstChild.toDataURL("image/png").split(',')[1];
+                    zip.file(nomeArquivo + ".png", imageData, { base64: true });
+                }
+            }
+
+            // Armazena o objeto JSZip para uso posterior
+            window.zip = zip;
+        }
+        
+        function baixarZIP() {
+            // Gera o arquivo ZIP e cria um link para download
+            if (window.zip) {
+                window.zip.generateAsync({ type: "blob" }).then(function (blob) {
+                    var linkDownload = document.createElement("a");
+                    linkDownload.href = URL.createObjectURL(blob);
+                    linkDownload.download = "qrcodes.zip";
+                    linkDownload.click();
+                });
+            }
+        }
+    </script>
+</body>
+</html>
